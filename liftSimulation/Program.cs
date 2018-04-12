@@ -18,11 +18,12 @@ namespace liftSimulation
 
                 simulator.Simulate();
 
-                Console.WriteLine("Persons processed in {0} minutes", context.TimePeriod);
+                //Console.WriteLine("Persons processed in {0} seconds", context.TimePeriod);
 
-                Console.WriteLine("Lift processed {0} persons", lift.ProcessedCount);
+                //Console.WriteLine("Lift processed {0} persons", lift.ProcessedCount);
+                Console.WriteLine("\n\n");
+                Console.WriteLine(SimulationResultsToString(context, lift));
             }
-
             Console.ReadKey();
         }
 
@@ -53,6 +54,37 @@ namespace liftSimulation
             new SimulationEndTrigger(() => waitingPersons.Count == 0);
 
             return lift;
+        }
+
+        private static string SimulationResultsToString(SimulationContext context, Lift lift)
+        {
+            float avgServiceTime, avgWaitTime;
+
+            avgServiceTime = avgWaitTime = 0.0f;
+            string str = "";
+            str += "-------------------------- SIMULATION ENDED -----------------------\n\n";
+            str += context.TimePeriod  + " Persons processed in "+ lift.ProcessedCount + " seconds\n";
+            str += "                            PERSONS RECAP \n";
+            str += "BEGIN QUEUE TIME\t ENTERING LIFT\t LEAVING LIFT\n";
+
+            foreach(Person p in lift.ProcessedPersons)
+            {
+                avgWaitTime += (p.EnteringLiftTime - p.BeginQueueTime);
+                avgServiceTime += (p.ExitingLiftTime - p.EnteringLiftTime);
+                str += p.BeginQueueTime + "                \t " + p.EnteringLiftTime + "             \t " + p.ExitingLiftTime + " \n";
+            }
+
+            avgServiceTime /= lift.ProcessedCount;
+            avgWaitTime /= lift.ProcessedCount;
+
+            str += "\n-----------------------------------------------------------------\n";
+            str += "Average waiting time : " + avgWaitTime + "\n";
+            str += "Average service time : " + avgServiceTime + "\n";
+
+            
+
+
+            return str;
         }
 
         

@@ -26,30 +26,40 @@ namespace liftSimulation
             get;
             private set;
         }
-
-
-        /*public Dictionary<Queue<Person>, int> ProcessingTimeRequiredByJobQueue
+        
+        public long BeginQueueTime
         {
             get;
-            private set;
-        }*/
+            set;
+        }
+
+        public long EnteringLiftTime
+        {
+            get;
+            set;
+        }
+
+        public long ExitingLiftTime
+        {
+            get;
+            set;
+        }
+
 
         public Person(int id, int departure, int destination)
         {
             this.Id = id;
             this.Departure = departure;
             this.Destination = destination;
-
-            //ProcessingTimeRequiredByJobQueue = new Dictionary<Queue<Person>, int>();
         }
 
-        /*public bool RequiresMoreWork
+        public Person(int id, int departure, int destination, long beginQueueTime)
         {
-            get
-            {
-                return ProcessingTimeRequiredByJobQueue.Count > 0;
-            }
-        }*/
+            this.Id = id;
+            this.Departure = departure;
+            this.Destination = destination;
+            this.BeginQueueTime = beginQueueTime;
+        }
 
         
     }
