@@ -18,28 +18,65 @@ namespace liftSimulation
         public int Departure
         {
             get;
-            private set;
+            set;
+        }
+
+        public long TimeBeforeGoingActive
+        {
+            get;
+            set;
         }
 
         public int Destination
         {
             get;
-            private set;
+            set;
         }
         
-        public long BeginQueueTime
+        public long BeginQueueTimeGoingUp
         {
             get;
             set;
         }
 
-        public long EnteringLiftTime
+        public long BeginQueueTimeGoingDown
         {
             get;
             set;
         }
 
-        public long ExitingLiftTime
+        public long EnteringLiftTimeGoingUp
+        {
+            get;
+            set;
+        }
+
+        public long EnteringLiftTimeGoingDown
+        {
+            get;
+            set;
+        }
+
+        public long ExitingLiftTimeGoingUp
+        {
+            get;
+            set;
+        }
+
+        public long ExitingLiftTimeGoingDown
+        {
+            get;
+            set;
+        }
+        
+
+        public long TotalQueueTime
+        {
+            get;
+            set;
+        }
+
+        public long TotalTimeInLift
         {
             get;
             set;
@@ -53,13 +90,26 @@ namespace liftSimulation
             this.Destination = destination;
         }
 
-        public Person(int id, int departure, int destination, long beginQueueTime)
+        public Person(int id, int departure, int destination, long beginQueueTime, long timeBeforeGoingActive)
         {
             this.Id = id;
             this.Departure = departure;
             this.Destination = destination;
-            this.BeginQueueTime = beginQueueTime;
+            this.BeginQueueTimeGoingUp = beginQueueTime;
+            this.TimeBeforeGoingActive = timeBeforeGoingActive;
+            
         }
+
+        public override string ToString()
+        {
+            string str = "";
+            str += Id + "\t " + BeginQueueTimeGoingUp + "           \t " + EnteringLiftTimeGoingUp + "             \t " + ExitingLiftTimeGoingUp + " \t|  ";
+            str += BeginQueueTimeGoingDown + "           \t " + EnteringLiftTimeGoingDown + "             \t " + ExitingLiftTimeGoingDown + "\n";
+
+            return str;
+        }
+
+        
 
         
     }

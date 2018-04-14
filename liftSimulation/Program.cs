@@ -8,52 +8,49 @@ namespace liftSimulation
 {
     public static class Program
     {
+        private static Lift lift;
+        private static PersonGenerator personGenerator;
         static void Main(string[] args)
         {
+
+
             using (var context = new SimulationContext(true))
             {
-                var lift = CreateModel(context, 4, 3, 4);
+                InitiateModel(context, 2, 4);
 
-                var simulator = new Simulator();
+                Simulator simulator = new Simulator();
 
                 simulator.Simulate();
-
-                //Console.WriteLine("Persons processed in {0} seconds", context.TimePeriod);
-
-                //Console.WriteLine("Lift processed {0} persons", lift.ProcessedCount);
+                
                 Console.WriteLine("\n\n");
                 Console.WriteLine(SimulationResultsToString(context, lift));
             }
             Console.ReadKey();
         }
 
-        private static Lift CreateModel(SimulationContext context, int nbPersons, int nbFloors, int liftMaximumCapacity)
+        private static void InitiateModel(SimulationContext context, int nbFloors, int liftMaximumCapacity)
         {
-            var rand = new Random();
+            Random rand = new Random();
 
-            var waitingPersons = new List<Person>();
+            List<Queue<Person>> personsQueues = new List<Queue<Person>>();
 
-            var personsQueue = new Queue<Person>();
-
-            var random = new Random();
-
-            var lift = new Lift(personsQueue, waitingPersons, liftMaximumCapacity, nbFloors, random);
-
-            Console.WriteLine("Persons : ");
-            for(int i = 0; i < nbPersons; i++)
+            for(int i = 0; i < nbFloors; i++)
             {
-                var newPerson = new Person(i, 0, rand.Next(1, nbFloors));
-
-                personsQueue.Enqueue(newPerson);
-
-                waitingPersons.Add(newPerson);
-                Console.WriteLine("Person {0} : going from floor {1} to {2}", i, newPerson.Departure, newPerson.Destination);
+                personsQueues.Add(new Queue<Person>());
             }
-            Console.WriteLine("-----------------------------------------------");
 
-            new SimulationEndTrigger(() => waitingPersons.Count == 0);
 
-            return lift;
+            personGenerator = new PersonGenerator(personsQueues, nbFloors);
+
+            lift = new Lift(personsQueues, liftMaximumCapacity, nbFloors, new Random(12345), personGenerator);
+
+
+
+
+
+            new SimulationEndTrigger(() => context.TimePeriod >= 10000);
+
+            
         }
 
         private static string SimulationResultsToString(SimulationContext context, Lift lift)
@@ -63,15 +60,17 @@ namespace liftSimulation
             avgServiceTime = avgWaitTime = 0.0f;
             string str = "";
             str += "-------------------------- SIMULATION ENDED -----------------------\n\n";
-            str += context.TimePeriod  + " Persons processed in "+ lift.ProcessedCount + " seconds\n";
+            str += lift.ProcessedCount + " Persons processed in "+ context.TimePeriod + " seconds\n";
             str += "                            PERSONS RECAP \n";
-            str += "BEGIN QUEUE TIME\t ENTERING LIFT\t LEAVING LIFT\n";
+            str += "\t\t UP \t\t\t DOWN\n";
+            str += "ID\tBEGIN QUEUE\t ENTERING LIFT\t LEAVING LIFT\tBEGIN QUEUE\t ENTERING LIFT\t LEAVING LIFT\n";
 
             foreach(Person p in lift.ProcessedPersons)
             {
-                avgWaitTime += (p.EnteringLiftTime - p.BeginQueueTime);
-                avgServiceTime += (p.ExitingLiftTime - p.EnteringLiftTime);
-                str += p.BeginQueueTime + "                \t " + p.EnteringLiftTime + "             \t " + p.ExitingLiftTime + " \n";
+                avgWaitTime += p.TotalQueueTime;
+                avgServiceTime += p.TotalTimeInLift;
+
+                str += p.ToString();
             }
 
             avgServiceTime /= lift.ProcessedCount;
@@ -87,6 +86,7 @@ namespace liftSimulation
             return str;
         }
 
+        
         
     }
 }

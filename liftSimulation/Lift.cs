@@ -11,11 +11,13 @@ namespace liftSimulation
 {
     public class Lift : Process
     {
-        private List<Person> _waitingPersons = null;
+        #region Attributes
         private Random _random = null;
-
-        
-
+        public PersonGenerator personsGenerator
+        {
+            get;
+            private set;
+        }
 
         public int NbFloors
         {
@@ -79,10 +81,13 @@ namespace liftSimulation
             private set;
         }
 
-        public Lift(Queue<Person> personsQueue, List<Person> waitingPersonsList, int maxCapacity, int nbFloors, Random random) : base()
+        #endregion
+
+        #region Constructor
+
+        public Lift(List<Queue<Person>> personsQueue, int maxCapacity, int nbFloors, Random random, PersonGenerator generator) : base()
         {
-            this.PersonsQueue = personsQueue;
-            this._waitingPersons = waitingPersonsList;
+            //this.PersonsQueue = personsQueue;
             this.MaxCapacity = maxCapacity;
             this.CurrentLoad = 0;
             this.PersonsInLift = new List<Person>();
@@ -92,102 +97,61 @@ namespace liftSimulation
             this.RequestedFloors = new List<int>();
             this.ProcessTime = 0;
             this.ProcessedPersons = new List<Person>();
+            this.personsGenerator = generator;
+
 
         }
+        #endregion  
 
-        
+
         public override IEnumerator<InstructionBase> Simulate()
         {
 
-            foreach(Person p in _waitingPersons)
-            {
-                p.BeginQueueTime = Context.TimePeriod;
-            }
+            
+
+            //RequestedFloors = personsGenerator.getFloorsWhereLiftIsNeeded();
             while(true)
             {
-                if (PersonsQueue.Count == 0)
+                if (CurrentLoad < MaxCapacity)
                 {
-                    yield return new WaitConditionInstruction(() => PersonsQueue.Count > 0);
+                    RequestedFloors.AddRange(personsGenerator.getFloorsWhereLiftIsNeeded());
+                    RequestedFloors = RequestedFloors.Union(RequestedFloors).ToList();
+                    RequestedFloors.Sort();
+                }
+
+
+                if (RequestedFloors.Count == 0)
+                {
+                    //Console.WriteLine("Waiting");
+                    yield return new WaitConditionInstruction(() => personsGenerator.getFloorsWhereLiftIsNeeded().Count > 0);
                 }
                 else
                 {
-                    
-                    if(CurrentFloor == 0)
+                    if (personsGenerator.PersonsWaiting[CurrentFloor].Count > 0 && CurrentLoad < MaxCapacity)
                     {
-                        Console.WriteLine("On ground floor, {0} persons are waiting", PersonsQueue.Count);
-                        while (PersonsQueue.Count > 0 && CurrentLoad < MaxCapacity)
-                        {
-                            var enteringPerson = PersonsQueue.Dequeue();
-                            PersonsInLift.Add(enteringPerson);
-                            enteringPerson.EnteringLiftTime = Context.TimePeriod;
-                            
-
-                            Console.WriteLine("Person {0} is entering the lift", enteringPerson.Id);
-
-                            if (!RequestedFloors.Contains(enteringPerson.Destination))
-                            {
-                                RequestedFloors.Add(enteringPerson.Destination);
-                            }
-                            CurrentLoad++;
-                            
-                            yield return new WaitInstruction(10);
-
-                        }
-                        RequestedFloors.Sort();
-
-                        Console.WriteLine("Requested floors : ");
-                        foreach(int floor in RequestedFloors)
-                        {
-                            Console.WriteLine("    - {0}", floor);
-                        }
-
-                        Console.WriteLine("---------------------------------");
+                        int nbNewComers = Board();
+                        yield return new WaitInstruction(3 * nbNewComers);
                     }
-
-                    if(CurrentLoad > 0)
-                    {
-                        bool hasAnyoneLeft = false;
-                        do
-                        {
-                            hasAnyoneLeft = false;
-                            Console.WriteLine("Going up ! (from {0} to {1})", CurrentFloor, CurrentFloor + 1);
-                            Up();
-                            yield return new WaitInstruction(20);
-                            
-                            for(int i = 0; i < PersonsInLift.Count; i++)
-                            {
-                                if(PersonsInLift[i].Destination == CurrentFloor)
-                                {
-                                    Console.WriteLine("Person {0} has reached its destination", PersonsInLift[i].Id);
-
-                                    hasAnyoneLeft = true;
-                                    LeaveLift(PersonsInLift[i]);
-
-                                    i--;
-                                    
-                                }
-                            }
-                            Console.WriteLine("There are now {0} persons in the lift", PersonsInLift.Count);
-
-
-                            if (hasAnyoneLeft)
-                            {
-                                yield return new WaitInstruction(5);
-                            }
-                        } while (CurrentLoad > 0 && CurrentFloor != NbFloors - 1);
-
                         
-                    }
-                    else
-                    {
-                        while (CurrentFloor != 0)
-                        {
-                            Console.WriteLine("Going down ! (from {0} to {1})", CurrentFloor, CurrentFloor - 1);
-                            Down();
-                            yield return new WaitInstruction(20);
-                        }
-                    }
+
+
                     
+                    if (RequestedFloors.Count > 0)
+                    {
+
+                        var originalFloor = CurrentFloor;
+                        MoveToFloor(RequestedFloors[0]);
+                        yield return new WaitInstruction((Math.Abs(CurrentFloor - originalFloor)) * 20);
+
+
+                        if(CurrentLoad != 0)
+                        {
+                            int nbPeopleLeft = Disembark();
+                            yield return new WaitInstruction(3 * nbPeopleLeft);
+                        }
+                        RequestedFloors.RemoveAt(0);
+
+                    }
                 }
             }
 
@@ -198,6 +162,7 @@ namespace liftSimulation
             if(CurrentFloor < NbFloors - 1)
             {
                 CurrentFloor++;
+                
             }
             else
             {
@@ -217,14 +182,152 @@ namespace liftSimulation
             }
         }
 
+        
+
         private void LeaveLift(Person p)
         {
-            p.ExitingLiftTime = Context.TimePeriod;
+           
+            
+
+
+            if(p.Departure == 0)
+            {
+                p.ExitingLiftTimeGoingUp = Context.TimePeriod;
+                p.TotalTimeInLift = Context.TimePeriod - p.EnteringLiftTimeGoingUp;
+                p.Departure = p.Destination;
+                p.Destination = 0;
+                if (_random.Next(2) == 0)
+                {
+                    p.TimeBeforeGoingActive = 3600 + _random.Next(120);
+                }
+                else
+                {
+                    p.TimeBeforeGoingActive = 3600 - _random.Next(120);
+                }
+                personsGenerator.PersonsPool.Add(p);
+            }
+            else
+            {
+                p.ExitingLiftTimeGoingDown = Context.TimePeriod;
+                p.TotalTimeInLift += Context.TimePeriod - p.EnteringLiftTimeGoingDown;
+                ProcessedPersons.Add(p);
+
+
+                ProcessedCount++;
+            }
+            
             PersonsInLift.Remove(p);
-            _waitingPersons.Remove(p);
-            ProcessedPersons.Add(p);
-            ProcessedCount++;
+            
+            
             CurrentLoad--;
         }
+
+        private void EnterLift(Person p)
+        {
+            if(p.Departure == 0)
+            {
+                p.EnteringLiftTimeGoingUp = Context.TimePeriod;
+                p.TotalQueueTime = Context.TimePeriod - p.BeginQueueTimeGoingUp;
+            }
+            else
+            {
+                p.EnteringLiftTimeGoingDown = Context.TimePeriod;
+                p.TotalQueueTime += Context.TimePeriod - p.BeginQueueTimeGoingDown;
+            }
+
+            PersonsInLift.Add(p);
+
+            
+
+
+            Console.WriteLine("Person {0} is entering the lift", p.Id);
+
+            if (!RequestedFloors.Contains(p.Destination))
+            {
+                RequestedFloors.Add(p.Destination);
+            }
+            CurrentLoad++;
+            
+        }
+
+        private void MoveToFloor(int destination)
+        {
+            
+            if (destination > CurrentFloor)
+            {
+
+                while(CurrentFloor != destination)
+                {
+                    Up();
+                }
+
+            }
+            else if (destination < CurrentFloor)
+            {
+                
+                while (CurrentFloor != destination)
+                {
+                    Down();
+                }
+
+            }
+
+            
+            
+        }
+
+        private int Board()
+        {
+            int nbNewcomers = 0;
+            if (personsGenerator.PersonsWaiting[CurrentFloor].Count > 0 && CurrentLoad < MaxCapacity)
+            {
+                Console.WriteLine("On floor {0}, {1} persons are waiting", CurrentFloor, personsGenerator.PersonsWaiting[CurrentFloor].Count);
+
+                while (personsGenerator.PersonsWaiting[CurrentFloor].Count > 0 && CurrentLoad < MaxCapacity)
+                {
+                    Person enteringPerson = personsGenerator.PersonsWaiting[CurrentFloor].Dequeue();
+
+                    EnterLift(enteringPerson);
+                    nbNewcomers++;
+
+                }
+                RequestedFloors.Sort();
+
+                Console.WriteLine("Requested floors : ");
+                foreach (int floor in RequestedFloors)
+                {
+                    Console.WriteLine("    - {0}", floor);
+                }
+
+                Console.WriteLine("---------------------------------");
+            }
+
+            return nbNewcomers;
+        }
+
+        private int Disembark()
+        {
+            int nbPersonLeaving = 0;
+            if (RequestedFloors[0] == CurrentFloor)
+            {
+                for (int i = 0; i < PersonsInLift.Count; i++)
+                {
+                    if (PersonsInLift[i].Destination == CurrentFloor)
+                    {
+                        Console.WriteLine("Person {0} has reached its destination", PersonsInLift[i].Id);
+                        
+                        LeaveLift(PersonsInLift[i]);
+                        nbPersonLeaving++;
+                        i--;
+
+                    }
+                }
+                Console.WriteLine("There are now {0} persons in the lift", PersonsInLift.Count);
+            }
+            return nbPersonLeaving;
+        }
+
+
+        
     }
 }
