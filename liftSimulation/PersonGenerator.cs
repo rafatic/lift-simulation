@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,13 +25,13 @@ namespace liftSimulation
             get;
             private set;
         }
-        public List<Queue<Person>> PersonsWaiting
+        public List<ConcurrentQueue<Person>> PersonsWaiting
         {
             get;
             private set;
         }
 
-        public PersonGenerator(List<Queue<Person>> personsWaiting, int nbFloors, int seed = 12345) :base()
+        public PersonGenerator(List<ConcurrentQueue<Person>> personsWaiting, int nbFloors, int seed = 12345) :base()
         {
             personId = 0;
             rand = new Random(seed);
@@ -44,12 +45,13 @@ namespace liftSimulation
         public override IEnumerator<InstructionBase> Simulate()
         {
             int spawnTime = 0;
-            for(int i = 0; i < 2; i++)
+            for(int i = 0; i < 11; i++)
             {
                 spawnTime = rand.Next(600);
-                PersonsPool.Add(new Person(personId, 0, rand.Next(1, nbFloors - 1), spawnTime, spawnTime));
+                PersonsPool.Add(new Person(personId, 0, rand.Next(1, nbFloors), spawnTime, spawnTime));
                 personId++;
             }
+
             while(true)
             {
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,12 +9,15 @@ namespace liftSimulation
 {
     public static class Program
     {
-        private static Lift lift;
+        private static Lift lift1, lift2;
         private static PersonGenerator personGenerator;
+
+
+        
+
         static void Main(string[] args)
         {
-
-
+            
             using (var context = new SimulationContext(true))
             {
                 InitiateModel(context, 2, 4);
@@ -23,7 +27,11 @@ namespace liftSimulation
                 simulator.Simulate();
                 
                 Console.WriteLine("\n\n");
-                Console.WriteLine(SimulationResultsToString(context, lift));
+                Console.WriteLine("RESULTS LIFT 1 \n\n");
+                Console.WriteLine(SimulationResultsToString(context, lift1));
+
+                Console.WriteLine("\n\nRESULTS LIFT 2 \n\n");
+                Console.WriteLine(SimulationResultsToString(context, lift2));
             }
             Console.ReadKey();
         }
@@ -32,18 +40,18 @@ namespace liftSimulation
         {
             Random rand = new Random();
 
-            List<Queue<Person>> personsQueues = new List<Queue<Person>>();
+            List<ConcurrentQueue<Person>> personsQueues = new List<ConcurrentQueue<Person>>();
 
             for(int i = 0; i < nbFloors; i++)
             {
-                personsQueues.Add(new Queue<Person>());
+                personsQueues.Add(new ConcurrentQueue<Person>());
             }
 
 
             personGenerator = new PersonGenerator(personsQueues, nbFloors);
 
-            lift = new Lift(personsQueues, liftMaximumCapacity, nbFloors, new Random(12345), personGenerator);
-
+            lift1 = new Lift(personsQueues, liftMaximumCapacity, nbFloors, new Random(12345), personGenerator);
+            lift2 = new Lift(personsQueues, liftMaximumCapacity, nbFloors, new Random(12345), personGenerator);
 
 
 

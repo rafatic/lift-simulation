@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -43,7 +44,7 @@ namespace liftSimulation
             private set;
         }
 
-        public Queue<Person> PersonsQueue
+        public ConcurrentQueue<Person> PersonsQueue
         {
             get;
             private set;
@@ -85,7 +86,7 @@ namespace liftSimulation
 
         #region Constructor
 
-        public Lift(List<Queue<Person>> personsQueue, int maxCapacity, int nbFloors, Random random, PersonGenerator generator) : base()
+        public Lift(List<ConcurrentQueue<Person>> personsQueue, int maxCapacity, int nbFloors, Random random, PersonGenerator generator) : base()
         {
             //this.PersonsQueue = personsQueue;
             this.MaxCapacity = maxCapacity;
@@ -283,12 +284,23 @@ namespace liftSimulation
             {
                 Console.WriteLine("On floor {0}, {1} persons are waiting", CurrentFloor, personsGenerator.PersonsWaiting[CurrentFloor].Count);
 
+                bool dequeueSuccesfull = false;
                 while (personsGenerator.PersonsWaiting[CurrentFloor].Count > 0 && CurrentLoad < MaxCapacity)
                 {
-                    Person enteringPerson = personsGenerator.PersonsWaiting[CurrentFloor].Dequeue();
-
-                    EnterLift(enteringPerson);
-                    nbNewcomers++;
+                    //Person enteringPerson = personsGenerator.PersonsWaiting[CurrentFloor].Dequeue();
+                    Person enteringPerson = null;
+                    while (dequeueSuccesfull == false)
+                    {
+                        dequeueSuccesfull =  personsGenerator.PersonsWaiting[CurrentFloor].TryDequeue(out enteringPerson);
+                    }
+                    
+                    if(enteringPerson != null)
+                    {
+                        EnterLift(enteringPerson);
+                        nbNewcomers++;
+                    }
+                    dequeueSuccesfull = false;
+                    
 
                 }
                 RequestedFloors.Sort();
