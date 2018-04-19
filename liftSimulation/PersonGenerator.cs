@@ -6,11 +6,16 @@ using System.Text;
 using System.Threading.Tasks;
 using NSimulate;
 using NSimulate.Instruction;
+using MathNet.Numerics.Distributions;
 
 namespace liftSimulation
 {
     public class PersonGenerator : Process
     {
+        // Lois distribution
+        private Poisson poisson;
+        private Exponential expo;
+
         private int personId;
         private int nbFloors;
         private Random rand;
@@ -33,11 +38,12 @@ namespace liftSimulation
 
         public PersonGenerator(List<ConcurrentQueue<Person>> personsWaiting, int nbFloors, int seed = 12345) :base()
         {
+            poisson = new Poisson(0.5);
+            expo = new Exponential(60.0);
             personId = 0;
-            rand = new Random(seed);
+            rand = new Random(new System.DateTime().Millisecond);
             this.PersonsPool = new List<Person>();
             this.PersonsWaiting = personsWaiting;
-
 
             this.nbFloors = nbFloors;
         }
@@ -85,6 +91,30 @@ namespace liftSimulation
                 yield return new WaitInstruction(1);
             }
 
+        }
+
+        public int NumberOfArrival()
+        {
+            double randomNumber = rand.NextDouble();
+            int k = 0;
+            
+            do
+            {
+                k++;
+            } while (poisson.Probability(k) > randomNumber);
+
+            return k-1;
+        }
+
+        public void PersonsArrival()
+        {
+            int NbArrivals = NumberOfArrival();
+
+            for (int i=0; i < NbArrivals; i++)
+            {
+                // Creer nouvelle personne
+                // temps de "travail" = expo.Density(rand.NextDouble());
+            }
         }
 
         public List<int> getFloorsWhereLiftIsNeeded()
