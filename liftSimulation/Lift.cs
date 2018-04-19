@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MathNet.Numerics.Distributions;
 using NSimulate;
 using NSimulate.Instruction;
 
@@ -13,7 +14,9 @@ namespace liftSimulation
     public class Lift : Process
     {
         #region Attributes
-        private Random _random = null;
+        private Exponential expo;
+        private Random rand;
+        
         public PersonGenerator personsGenerator
         {
             get;
@@ -94,13 +97,12 @@ namespace liftSimulation
             this.PersonsInLift = new List<Person>();
             this.NbFloors = nbFloors;
             this.CurrentFloor = 0;
-            this._random = random;
+            this.rand = random;
+            this.expo = new Exponential(1.0);
             this.RequestedFloors = new List<int>();
             this.ProcessTime = 0;
             this.ProcessedPersons = new List<Person>();
             this.personsGenerator = generator;
-
-
         }
         #endregion  
 
@@ -197,14 +199,8 @@ namespace liftSimulation
                 p.TotalTimeInLift = Context.TimePeriod - p.EnteringLiftTimeGoingUp;
                 p.Departure = p.Destination;
                 p.Destination = 0;
-                if (_random.Next(2) == 0)
-                {
-                    p.TimeBeforeGoingActive = 3600 + _random.Next(120);
-                }
-                else
-                {
-                    p.TimeBeforeGoingActive = 3600 - _random.Next(120);
-                }
+                p.TimeBeforeGoingActive = (long)60.0 * (long)expo.Density(rand.NextDouble());
+                
                 personsGenerator.PersonsPool.Add(p);
             }
             else

@@ -12,9 +12,10 @@ namespace liftSimulation
 {
     public class PersonGenerator : Process
     {
+        private int SimulationMinuteTime;
+
         // Lois distribution
         private Poisson poisson;
-        private Exponential expo;
 
         private int personId;
         private int nbFloors;
@@ -38,10 +39,13 @@ namespace liftSimulation
 
         public PersonGenerator(List<ConcurrentQueue<Person>> personsWaiting, int nbFloors, int seed = 12345) :base()
         {
+            SimulationMinuteTime = 60;
+
             poisson = new Poisson(0.5);
-            expo = new Exponential(60.0);
+            rand = new Random(12345);
+
             personId = 0;
-            rand = new Random(new System.DateTime().Millisecond);
+
             this.PersonsPool = new List<Person>();
             this.PersonsWaiting = personsWaiting;
 
@@ -50,12 +54,9 @@ namespace liftSimulation
 
         public override IEnumerator<InstructionBase> Simulate()
         {
-            int spawnTime = 0;
-            for(int i = 0; i < 11; i++)
+            for(int i = 0; i < SimulationMinuteTime; i++)
             {
-                spawnTime = rand.Next(600);
-                PersonsPool.Add(new Person(personId, 0, rand.Next(1, nbFloors), spawnTime, spawnTime));
-                personId++;
+                PersonsArrival(i);
             }
 
             while(true)
@@ -98,22 +99,22 @@ namespace liftSimulation
             double randomNumber = rand.NextDouble();
             int k = 0;
             
-            do
+            while (poisson.CumulativeDistribution(k) <= randomNumber)
             {
                 k++;
-            } while (poisson.Probability(k) > randomNumber);
+            }
 
-            return k-1;
+            return k;
         }
 
-        public void PersonsArrival()
+        public void PersonsArrival(int minute)
         {
             int NbArrivals = NumberOfArrival();
 
             for (int i=0; i < NbArrivals; i++)
             {
-                // Creer nouvelle personne
-                // temps de "travail" = expo.Density(rand.NextDouble());
+                PersonsPool.Add(new Person(personId, 0, rand.Next(1, nbFloors), minute * 60, minute * 60));
+                personId++;
             }
         }
 
