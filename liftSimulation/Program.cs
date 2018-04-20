@@ -18,32 +18,9 @@ namespace liftSimulation
 
         static void Main(string[] args)
         {
-            ShorterSeekTimeFirstOrdonancer sstf = new ShorterSeekTimeFirstOrdonancer((int)ShorterSeekTimeFirstOrdonancer.Heading.DOWNWARDS, 2);
-            //int[] floors = new int[3] { 3, 1, 4};
-            List<int> floors = new List<int>();
+            
 
-            floors.Add(3);
-            floors.Add(1);
-            floors.Add(4);
-            floors.Add(0);
-            floors.Add(5);
-            floors.Add(9);
-            floors.Add(7);
-            floors.Add(12);
-            floors.Add(-1);
-
-            foreach (int f in floors)
-            {
-                Console.Write(f + " - ");
-            }
-            Console.WriteLine();
-            floors = sstf.Sort(floors);
-            foreach (int f in floors)
-            {
-                Console.Write(f + " - ");
-            }
-
-            /*using (var context = new SimulationContext(true))
+            using (var context = new SimulationContext(true))
             {
                 InitiateModel(context, 7, 4);
 
@@ -57,7 +34,7 @@ namespace liftSimulation
 
                 Console.WriteLine("\n\nRESULTS LIFT 2 \n\n");
                 Console.WriteLine(SimulationResultsToString(context, lift2));
-            }*/
+            }
             Console.ReadKey();
         }
 
@@ -75,8 +52,8 @@ namespace liftSimulation
 
             personGenerator = new PersonGenerator(personsQueues, nbFloors);
 
-            lift1 = new Lift(liftMaximumCapacity, nbFloors, new Random(12345), personGenerator);
-            lift2 = new Lift(liftMaximumCapacity, nbFloors, new Random(12345), personGenerator);
+            lift1 = new Lift(liftMaximumCapacity, nbFloors, new Random(12345), personGenerator, new DefaultOrdonancer((int)DefaultOrdonancer.Heading.UPWARDS, 0));
+            lift2 = new Lift(liftMaximumCapacity, nbFloors, new Random(12345), personGenerator, new DefaultOrdonancer((int)DefaultOrdonancer.Heading.UPWARDS, 0));
 
 
 

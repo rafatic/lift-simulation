@@ -73,11 +73,17 @@ namespace liftSimulation
             private set;
         }
 
+        public FloorOrdonancer Ordonancer
+        {
+            get;
+            private set;
+        }
+
         #endregion
 
         #region Constructor
 
-        public Lift(int maxCapacity, int nbFloors, Random random, PersonGenerator generator) : base()
+        public Lift(int maxCapacity, int nbFloors, Random random, PersonGenerator generator, FloorOrdonancer ordonancer) : base()
         {
             //this.PersonsQueue = personsQueue;
             this.MaxCapacity = maxCapacity;
@@ -90,6 +96,7 @@ namespace liftSimulation
             this.RequestedFloors = new List<int>();
             this.ProcessedPersons = new List<Person>();
             this.personsGenerator = generator;
+            this.Ordonancer = ordonancer;
         }
         #endregion  
 
@@ -106,7 +113,7 @@ namespace liftSimulation
                 {
                     RequestedFloors.AddRange(personsGenerator.getFloorsWhereLiftIsNeeded());
                     RequestedFloors = RequestedFloors.Union(RequestedFloors).ToList();
-                    RequestedFloors.Sort();
+                    RequestedFloors = Ordonancer.Sort(RequestedFloors);
                 }
 
 
@@ -286,7 +293,8 @@ namespace liftSimulation
                     
 
                 }
-                RequestedFloors.Sort();
+                //RequestedFloors.Sort();
+                RequestedFloors = Ordonancer.Sort(RequestedFloors);
 
                 Console.WriteLine("Requested floors : ");
                 foreach (int floor in RequestedFloors)

@@ -42,7 +42,7 @@ namespace liftSimulation
             SimulationMinuteTime = 60;
 
             poisson = new Poisson(0.5);
-            rand = new Random(12345);
+            rand = new Random(seed);
 
             personId = 0;
 

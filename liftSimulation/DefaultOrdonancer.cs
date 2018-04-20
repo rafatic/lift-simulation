@@ -6,17 +6,18 @@ using System.Threading.Tasks;
 
 namespace liftSimulation
 {
-    public class LinearScanOrdonancer : FloorOrdonancer
+    public class DefaultOrdonancer : FloorOrdonancer
     {
-        public LinearScanOrdonancer(int heading, int currentFloor) : base(heading, currentFloor)
+
+        public DefaultOrdonancer(int heading, int currentFloor) : base(heading, currentFloor)
         {
+
         }
 
         public override List<int> Sort(List<int> floors)
         {
-
-
-            return null;
+            floors.Sort();
+            return floors;
         }
     }
 }

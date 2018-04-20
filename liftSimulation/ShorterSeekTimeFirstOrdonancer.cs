@@ -104,7 +104,7 @@ namespace liftSimulation
             return minFloor;
         }
 
-        public new List<int> Sort(List<int> floors)
+        public override List<int> Sort(List<int> floors)
         {
             List<int> sortedFloors = new List<int>();
             int nbFloors = floors.Count, closestFloor, pivot = CurrentFloor;

@@ -35,9 +35,6 @@ namespace liftSimulation
             this.CurrentHeading = heading;
         }
 
-        public List<int> Sort(List<int> floors)
-        {
-            return null;
-        }
+        public abstract List<int> Sort(List<int> floors);
     }
 }
