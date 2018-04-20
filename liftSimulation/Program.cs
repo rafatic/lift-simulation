@@ -81,7 +81,7 @@ namespace liftSimulation
 
 
 
-            new SimulationEndTrigger(() => context.TimePeriod >= 10000);
+            new SimulationEndTrigger(() => context.TimePeriod >= 60*60);
 
             
         }
