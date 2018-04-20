@@ -43,13 +43,7 @@ namespace liftSimulation
             get;
             private set;
         }
-
-        public ConcurrentQueue<Person> PersonsQueue
-        {
-            get;
-            private set;
-        }
-
+        
         public List<Person> PersonsInLift
         {
             get;
@@ -67,13 +61,7 @@ namespace liftSimulation
             get;
             private set;
         }
-
-        public int ProcessTime
-        {
-            get;
-            private set;
-        }
-
+        
         
 
         public int ProcessedCount
@@ -86,7 +74,7 @@ namespace liftSimulation
 
         #region Constructor
 
-        public Lift(List<ConcurrentQueue<Person>> personsQueue, int maxCapacity, int nbFloors, Random random, PersonGenerator generator) : base()
+        public Lift(int maxCapacity, int nbFloors, Random random, PersonGenerator generator) : base()
         {
             //this.PersonsQueue = personsQueue;
             this.MaxCapacity = maxCapacity;
@@ -96,7 +84,6 @@ namespace liftSimulation
             this.CurrentFloor = 0;
             this._random = random;
             this.RequestedFloors = new List<int>();
-            this.ProcessTime = 0;
             this.ProcessedPersons = new List<Person>();
             this.personsGenerator = generator;
 
