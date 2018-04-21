@@ -18,8 +18,6 @@ namespace liftSimulation
 
         static void Main(string[] args)
         {
-            
-
             using (var context = new SimulationContext(true))
             {
                 InitiateModel(context, 7, 4);
@@ -52,8 +50,8 @@ namespace liftSimulation
 
             personGenerator = new PersonGenerator(personsQueues, nbFloors);
 
-            lift1 = new Lift(liftMaximumCapacity, nbFloors, new Random(12345), personGenerator, new DefaultOrdonancer((int)DefaultOrdonancer.Heading.UPWARDS, 0));
-            lift2 = new Lift(liftMaximumCapacity, nbFloors, new Random(12345), personGenerator, new DefaultOrdonancer((int)DefaultOrdonancer.Heading.UPWARDS, 0));
+            lift1 = new Lift(liftMaximumCapacity, nbFloors, new Random(12345), personGenerator, new LinearScanOrdonancer((int)LinearScanOrdonancer.Heading.UPWARDS, 0));
+            lift2 = new Lift(liftMaximumCapacity, nbFloors, new Random(12345), personGenerator, new LinearScanOrdonancer((int)LinearScanOrdonancer.Heading.UPWARDS, 0));
 
 
 

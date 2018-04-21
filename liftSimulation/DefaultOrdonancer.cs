@@ -9,7 +9,7 @@ namespace liftSimulation
     public class DefaultOrdonancer : FloorOrdonancer
     {
 
-        public DefaultOrdonancer(int heading, int currentFloor) : base(heading, currentFloor)
+        public DefaultOrdonancer(int heading = 0, int currentFloor = 0) : base(heading, currentFloor)
         {
 
         }
