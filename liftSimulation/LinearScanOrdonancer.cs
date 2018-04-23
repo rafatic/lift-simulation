@@ -21,9 +21,9 @@ namespace liftSimulation
             {
                 upperFloors = floors.Where(f => f > CurrentFloor).ToList();
             }
-            if (floors.Any(f => f < CurrentFloor))
+            if (floors.Any(f => f <= CurrentFloor))
             {
-                lowerFloors = floors.Where(f => f < CurrentFloor).ToList();
+                lowerFloors = floors.Where(f => f <= CurrentFloor).ToList();
             }
 
             upperFloors.Sort();

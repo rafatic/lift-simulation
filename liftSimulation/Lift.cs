@@ -97,6 +97,8 @@ namespace liftSimulation
             this.ProcessedPersons = new List<Person>();
             this.personsGenerator = generator;
             this.Ordonancer = ordonancer;
+
+            //RequestedFloors.Add(0);
         }
         #endregion  
 
