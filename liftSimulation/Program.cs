@@ -107,7 +107,7 @@ namespace liftSimulation
                 }
             }
             
-            new SimulationEndTrigger(() => isFinished(context));
+            new SimulationEndTrigger(() => context.TimePeriod >= simulationMinuteTime * 60 && IsModelEmpty(context));
         }
 
         
@@ -182,16 +182,35 @@ namespace liftSimulation
             }
         }
 
-        public static bool isFinished(SimulationContext context)
+        private static bool IsModelEmpty(SimulationContext context)
         {
-            if(context.TimePeriod >= 60 * 60)
+            bool isEmpty = true;
+            if(personGenerator.PersonsPool.Count > 0)
             {
-                return true;
+                isEmpty = false;
             }
-            else
+
+            foreach(Lift l in lifts)
             {
-                return false;
+                if(l.CurrentLoad > 0)
+                {
+                    isEmpty = false;
+                }
+
+                if(l.RequestedFloors.Count > 0)
+                {
+                    isEmpty = false;
+                }
             }
+
+            foreach(Floor f in personGenerator.Floors)
+            {
+                if(f.PersonsWaiting.Count > 0)
+                {
+                    isEmpty = false;
+                }
+            }
+            return isEmpty;
         }
 
 
