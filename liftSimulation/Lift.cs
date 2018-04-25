@@ -64,8 +64,14 @@ namespace liftSimulation
             get;
             private set;
         }
-        
-        
+
+        public long meanWorkTime
+        {
+            get;
+            private set;
+        }
+
+
 
         public int ProcessedCount
         {
@@ -83,7 +89,7 @@ namespace liftSimulation
 
         #region Constructor
 
-        public Lift(int maxCapacity, int nbFloors, Random random, PersonGenerator generator, FloorOrdonancer ordonancer) : base()
+        public Lift(int maxCapacity, int nbFloors, Random random, PersonGenerator generator, FloorOrdonancer ordonancer, long meanWorkTime) : base()
         {
             //this.PersonsQueue = personsQueue;
             this.MaxCapacity = maxCapacity;
@@ -97,6 +103,7 @@ namespace liftSimulation
             this.ProcessedPersons = new List<Person>();
             this.personsGenerator = generator;
             this.Ordonancer = ordonancer;
+            this.meanWorkTime = meanWorkTime;
 
             //RequestedFloors.Add(0);
         }
@@ -195,7 +202,7 @@ namespace liftSimulation
                 p.TotalTimeInLift = Context.TimePeriod - p.EnteringLiftTimeGoingUp;
                 p.Departure = p.Destination;
                 p.Destination = 0;
-                p.TimeBeforeGoingActive = (long)60.0 * (long)expo.Density(rand.NextDouble());
+                p.TimeBeforeGoingActive = (long)meanWorkTime * (long)expo.Density(rand.NextDouble());
                 
                 personsGenerator.PersonsPool.Add(p);
             }

@@ -10,34 +10,57 @@ namespace liftSimulation
 {
     public static class Program
     {
-        private static Lift lift1, lift2;
+        private static List<Lift> lifts;
         private static PersonGenerator personGenerator;
-
-
-        
 
         static void Main(string[] args)
         {
-            using (var context = new SimulationContext(true))
+            int nbLifts = int.Parse(args[0]);
+            int liftMaximumCapacity = int.Parse(args[1]);
+            int nbFloors = int.Parse(args[2]);
+            int simulationMinuteTime = int.Parse(args[3]);
+            int seed = int.Parse(args[4]);
+            long meanWorkTime = long.Parse(args[5]);
+            double meanPerson = double.Parse(args[6]);
+
+            for (int liftMethod = 0; liftMethod < 2; liftMethod++)
             {
-                InitiateModel(context, 7, 4);
+                using (var context = new SimulationContext(true))
+                {
+                    Console.WriteLine("\n\n");
+                    if (liftMethod == 0)
+                    {
+                        Console.WriteLine("RESULTS LINEAR SCAN ORDONNANCER");
+                    }
+                    if (liftMethod == 1)
+                    {
+                        Console.WriteLine("RESULTS SHORTER SEEK TIME ORDONNANCER");
+                    }
+                    if (liftMethod == 2)
+                    {
+                        Console.WriteLine("RESULTS DEFAULT ORDONNANCER");
+                    }
 
-                Simulator simulator = new Simulator();
+                    InitiateModel(context, nbLifts, nbFloors, liftMaximumCapacity, liftMethod, simulationMinuteTime, seed, meanWorkTime, meanPerson);
 
-                simulator.Simulate();
-                
-                Console.WriteLine("\n\n");
-                Console.WriteLine("RESULTS LIFT 1 \n\n");
-                Console.WriteLine(SimulationResultsToString(context, lift1));
+                    Simulator simulator = new Simulator();
 
-                Console.WriteLine("\n\nRESULTS LIFT 2 \n\n");
-                Console.WriteLine(SimulationResultsToString(context, lift2));
+                    simulator.Simulate();
+
+                    for (int j=0; j < lifts.Count; j++)
+                    {
+                        Console.WriteLine("\n\n");
+                        Console.WriteLine("RESULTS LIFT " + (j+1) + " \n\n");
+                        Console.WriteLine(SimulationResultsToString(context, lifts[j]));
+                    }
+                }
             }
             Console.ReadKey();
         }
 
-        private static void InitiateModel(SimulationContext context, int nbFloors, int liftMaximumCapacity)
+        private static void InitiateModel(SimulationContext context, int nbLifts, int nbFloors, int liftMaximumCapacity, int liftMethod, int simulationMinuteTime, int seed, long meanWorkTime, double meanPerson)
         {
+            lifts = new List<Lift>();
             Random rand = new Random();
 
             List<ConcurrentQueue<Person>> personsQueues = new List<ConcurrentQueue<Person>>();
@@ -47,18 +70,25 @@ namespace liftSimulation
                 personsQueues.Add(new ConcurrentQueue<Person>());
             }
 
+            personGenerator = new PersonGenerator(personsQueues, nbFloors, meanPerson, simulationMinuteTime);
 
-            personGenerator = new PersonGenerator(personsQueues, nbFloors);
-
-            lift1 = new Lift(liftMaximumCapacity, nbFloors, new Random(12345), personGenerator, new LinearScanOrdonancer((int)LinearScanOrdonancer.Heading.UPWARDS, 0));
-            lift2 = new Lift(liftMaximumCapacity, nbFloors, new Random(12345), personGenerator, new LinearScanOrdonancer((int)LinearScanOrdonancer.Heading.UPWARDS, 0));
-
-
-
-
-            new SimulationEndTrigger(() => context.TimePeriod >= 60*60);
-
+            for(int i=0; i < nbLifts; i++)
+            {
+                if (liftMethod == 0)
+                {
+                    lifts.Add(new Lift(liftMaximumCapacity, nbFloors, new Random(seed), personGenerator, new LinearScanOrdonancer((int)LinearScanOrdonancer.Heading.UPWARDS, 0), meanWorkTime));
+                }
+                if (liftMethod == 1)
+                {
+                    lifts.Add(new Lift(liftMaximumCapacity, nbFloors, new Random(seed), personGenerator, new ShorterSeekTimeFirstOrdonancer((int)LinearScanOrdonancer.Heading.UPWARDS, 0), meanWorkTime));
+                }
+                if (liftMethod == 2)
+                {
+                    lifts.Add(new Lift(liftMaximumCapacity, nbFloors, new Random(seed), personGenerator, new DefaultOrdonancer((int)LinearScanOrdonancer.Heading.UPWARDS, 0), meanWorkTime));
+                }
+            }
             
+            new SimulationEndTrigger(() => isFinished(context));
         }
 
         private static string SimulationResultsToString(SimulationContext context, Lift lift)
@@ -87,14 +117,20 @@ namespace liftSimulation
             str += "\n-----------------------------------------------------------------\n";
             str += "Average waiting time : " + avgWaitTime + "\n";
             str += "Average service time : " + avgServiceTime + "\n";
-
             
-
-
             return str;
         }
 
-        
-        
+        public static bool isFinished(SimulationContext context)
+        {
+            if(context.TimePeriod >= 60 * 60)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 }

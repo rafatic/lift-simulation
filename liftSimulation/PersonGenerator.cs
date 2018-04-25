@@ -37,11 +37,17 @@ namespace liftSimulation
             private set;
         }
 
-        public PersonGenerator(List<ConcurrentQueue<Person>> personsWaiting, int nbFloors, int seed = 12345) :base()
+        public double meanPerson
         {
-            SimulationMinuteTime = 60;
+            get;
+            private set;
+        }
 
-            poisson = new Poisson(0.5);
+        public PersonGenerator(List<ConcurrentQueue<Person>> personsWaiting, int nbFloors, double meanPerson, int simulationMinuteTime, int seed = 12345) :base()
+        {
+            SimulationMinuteTime = simulationMinuteTime;
+
+            poisson = new Poisson(meanPerson);
             rand = new Random(seed);
 
             personId = 0;
