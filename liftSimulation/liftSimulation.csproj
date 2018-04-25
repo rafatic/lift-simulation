@@ -53,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DefaultOrdonancer.cs" />
+    <Compile Include="Floor.cs" />
     <Compile Include="FloorOrdonancer.cs" />
     <Compile Include="Lift.cs" />
     <Compile Include="LinearScanOrdonancer.cs" />

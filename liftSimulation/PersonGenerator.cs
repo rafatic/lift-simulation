@@ -20,6 +20,20 @@ namespace liftSimulation
         private int personId;
         private int nbFloors;
         private Random rand;
+
+
+        public int AverageQueueSize
+        {
+            get;
+            private set;
+        }
+
+        public int MaximumQueueSize
+        {
+            get;
+            private set;
+        }
+
         public List<Person> PersonsInClass
         {
             get;
@@ -37,11 +51,17 @@ namespace liftSimulation
             private set;
         }
 
+        public List<Floor> Floors
+        {
+            get;
+            private set;
+        }
+
         public PersonGenerator(List<ConcurrentQueue<Person>> personsWaiting, int nbFloors, int seed = 12345) :base()
         {
             SimulationMinuteTime = 60;
 
-            poisson = new Poisson(0.5);
+            poisson = new Poisson(1.5);
             rand = new Random(seed);
 
             personId = 0;
@@ -50,6 +70,12 @@ namespace liftSimulation
             this.PersonsWaiting = personsWaiting;
 
             this.nbFloors = nbFloors;
+
+            Floors = new List<Floor>();
+            for(int i = 0; i < nbFloors; i++)
+            {
+                Floors.Add(new Floor(i));
+            }
         }
 
         public override IEnumerator<InstructionBase> Simulate()
@@ -81,7 +107,22 @@ namespace liftSimulation
                         }
 
                         
-                        PersonsWaiting[PersonsPool[i].Departure].Enqueue(PersonsPool[i]);
+                        //PersonsWaiting[PersonsPool[i].Departure].Enqueue(PersonsPool[i]);
+                        Floors[PersonsPool[i].Departure].PersonsWaiting.Enqueue(PersonsPool[i]);
+                        if(!Floors[PersonsPool[i].Departure].QueueSizeHistory.ContainsKey(Context.TimePeriod))
+                        {
+                            Floors[PersonsPool[i].Departure].QueueSizeHistory.Add(Context.TimePeriod, Floors[PersonsPool[i].Departure].PersonsWaiting.Count);
+                        }
+                        else
+                        {
+                            Floors[PersonsPool[i].Departure].QueueSizeHistory[Context.TimePeriod] = Floors[PersonsPool[i].Departure].PersonsWaiting.Count;
+                        }
+
+                        if(Floors[PersonsPool[i].Departure].MaximumQueueSize < Floors[PersonsPool[i].Departure].PersonsWaiting.Count)
+                        {
+                            Floors[PersonsPool[i].Departure].MaximumQueueSize = Floors[PersonsPool[i].Departure].PersonsWaiting.Count;
+                        }
+                        
                         PersonsPool.RemoveAt(i);
                         i--;
                     }
@@ -124,10 +165,14 @@ namespace liftSimulation
 
             for(int i = 0; i < nbFloors; i++)
             {
-                if(PersonsWaiting[i].Count > 0 )
+                /*if(PersonsWaiting[i].Count > 0 )
                 {
                     floors.Add(i);
                     
+                }*/
+                if(Floors[i].PersonsWaiting.Count > 0)
+                {
+                    floors.Add(i);
                 }
             }
 

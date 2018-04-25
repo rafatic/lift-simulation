@@ -68,6 +68,8 @@ namespace liftSimulation
             get;
             set;
         }
+
+
         
 
         public long TotalQueueTime
@@ -103,8 +105,8 @@ namespace liftSimulation
         public override string ToString()
         {
             string str = "";
-            str += Id + "\t " + BeginQueueTimeGoingUp + "           \t " + EnteringLiftTimeGoingUp + "             \t " + ExitingLiftTimeGoingUp + " \t|  ";
-            str += BeginQueueTimeGoingDown + "           \t " + EnteringLiftTimeGoingDown + "             \t " + ExitingLiftTimeGoingDown + "\n";
+            str += Id + "\t" + BeginQueueTimeGoingUp + "\t\t" + (EnteringLiftTimeGoingUp - BeginQueueTimeGoingUp) + "\t\t " + (ExitingLiftTimeGoingUp - EnteringLiftTimeGoingUp) + " \t\t|  ";
+            str += BeginQueueTimeGoingDown + "\t\t " + (EnteringLiftTimeGoingDown - BeginQueueTimeGoingDown) + "\t\t" + (ExitingLiftTimeGoingDown - EnteringLiftTimeGoingDown) + "\n";
 
             return str;
         }

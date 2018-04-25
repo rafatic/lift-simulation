@@ -17,6 +17,12 @@ namespace liftSimulation
         private Exponential expo;
         private Random rand;
         
+        public int TimeBusy
+        {
+            get;
+            private set;
+        }
+
         public PersonGenerator personsGenerator
         {
             get;
@@ -98,17 +104,15 @@ namespace liftSimulation
             this.personsGenerator = generator;
             this.Ordonancer = ordonancer;
 
-            //RequestedFloors.Add(0);
+            this.TimeBusy = 0;
+            
         }
         #endregion  
 
 
         public override IEnumerator<InstructionBase> Simulate()
         {
-
             
-
-            //RequestedFloors = personsGenerator.getFloorsWhereLiftIsNeeded();
             while(true)
             {
                 if (CurrentLoad < MaxCapacity)
@@ -126,9 +130,10 @@ namespace liftSimulation
                 }
                 else
                 {
-                    if (personsGenerator.PersonsWaiting[CurrentFloor].Count > 0 && CurrentLoad < MaxCapacity)
+                    if (personsGenerator.Floors[CurrentFloor].PersonsWaiting.Count > 0 && CurrentLoad < MaxCapacity)
                     {
                         int nbNewComers = Board();
+                        TimeBusy += 3 * nbNewComers;
                         yield return new WaitInstruction(3 * nbNewComers);
                     }
                         
@@ -140,12 +145,14 @@ namespace liftSimulation
 
                         var originalFloor = CurrentFloor;
                         MoveToFloor(RequestedFloors[0]);
-                        yield return new WaitInstruction((Math.Abs(CurrentFloor - originalFloor)) * 20);
+                        TimeBusy += (Math.Abs(CurrentFloor - originalFloor)) * 9;
+                        yield return new WaitInstruction((Math.Abs(CurrentFloor - originalFloor)) * 9);
 
 
                         if(CurrentLoad != 0)
                         {
                             int nbPeopleLeft = Disembark();
+                            TimeBusy += 3 * nbPeopleLeft;
                             yield return new WaitInstruction(3 * nbPeopleLeft);
                         }
                         RequestedFloors.RemoveAt(0);
@@ -221,12 +228,25 @@ namespace liftSimulation
             {
                 p.EnteringLiftTimeGoingUp = Context.TimePeriod;
                 p.TotalQueueTime = Context.TimePeriod - p.BeginQueueTimeGoingUp;
+                personsGenerator.Floors[p.Departure].AverageQueueSize += Context.TimePeriod - p.BeginQueueTimeGoingUp;
+
+                if ((Context.TimePeriod - p.BeginQueueTimeGoingUp) > personsGenerator.Floors[p.Departure].MaximumWaitingTime)
+                {
+                    personsGenerator.Floors[p.Departure].MaximumWaitingTime = Context.TimePeriod - p.BeginQueueTimeGoingUp;
+                }
             }
             else
             {
                 p.EnteringLiftTimeGoingDown = Context.TimePeriod;
                 p.TotalQueueTime += Context.TimePeriod - p.BeginQueueTimeGoingDown;
+                personsGenerator.Floors[p.Departure].AverageQueueSize += Context.TimePeriod - p.BeginQueueTimeGoingDown;
+                if ((Context.TimePeriod - p.BeginQueueTimeGoingUp) > personsGenerator.Floors[p.Departure].MaximumWaitingTime)
+                {
+                    personsGenerator.Floors[p.Departure].MaximumWaitingTime = Context.TimePeriod - p.BeginQueueTimeGoingUp;
+                }
+
             }
+            
 
             PersonsInLift.Add(p);
 
@@ -272,21 +292,21 @@ namespace liftSimulation
         private int Board()
         {
             int nbNewcomers = 0;
-            if (personsGenerator.PersonsWaiting[CurrentFloor].Count > 0 && CurrentLoad < MaxCapacity)
+            if (personsGenerator.Floors[CurrentFloor].PersonsWaiting.Count > 0 && CurrentLoad < MaxCapacity)
             {
-                Console.WriteLine("On floor {0}, {1} persons are waiting", CurrentFloor, personsGenerator.PersonsWaiting[CurrentFloor].Count);
+                Console.WriteLine("On floor {0}, {1} persons are waiting", CurrentFloor, personsGenerator.Floors[CurrentFloor].PersonsWaiting.Count);
 
                 bool dequeueSuccesfull = false;
-                while (personsGenerator.PersonsWaiting[CurrentFloor].Count > 0 && CurrentLoad < MaxCapacity)
+                while (personsGenerator.Floors[CurrentFloor].PersonsWaiting.Count > 0 && CurrentLoad < MaxCapacity)
                 {
-                    //Person enteringPerson = personsGenerator.PersonsWaiting[CurrentFloor].Dequeue();
                     Person enteringPerson = null;
                     while (dequeueSuccesfull == false)
                     {
-                        dequeueSuccesfull =  personsGenerator.PersonsWaiting[CurrentFloor].TryDequeue(out enteringPerson);
+                        dequeueSuccesfull = personsGenerator.Floors[CurrentFloor].PersonsWaiting.TryDequeue(out enteringPerson);
                     }
                     
-                    if(enteringPerson != null)
+
+                    if (enteringPerson != null)
                     {
                         EnterLift(enteringPerson);
                         nbNewcomers++;
@@ -295,7 +315,15 @@ namespace liftSimulation
                     
 
                 }
-                //RequestedFloors.Sort();
+                if(!personsGenerator.Floors[CurrentFloor].QueueSizeHistory.ContainsKey(Context.TimePeriod))
+                {
+                    personsGenerator.Floors[CurrentFloor].QueueSizeHistory.Add(Context.TimePeriod, personsGenerator.Floors[CurrentFloor].PersonsWaiting.Count);
+                }
+                else
+                {
+                    personsGenerator.Floors[CurrentFloor].QueueSizeHistory[Context.TimePeriod] = personsGenerator.Floors[CurrentFloor].PersonsWaiting.Count;
+                }
+                
                 RequestedFloors = Ordonancer.Sort(RequestedFloors);
 
                 Console.WriteLine("Requested floors : ");
