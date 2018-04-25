@@ -75,16 +75,23 @@ namespace liftSimulation
             return csvString;
         }
 
-        private double GetAverageQueueSize()
+        private bool hasComputedAverageQueueSize = false;
+
+        public double GetAverageQueueSize()
         {
-            AverageQueueSize = 0.0d;
-
-            foreach(KeyValuePair<long, int> elem in QueueSizeHistory)
+            if(!hasComputedAverageQueueSize)
             {
-                AverageQueueSize  += elem.Value;
-            }
+                hasComputedAverageQueueSize = true;
+                AverageQueueSize = 0.0d;
 
-            AverageQueueSize  /= QueueSizeHistory.Count;
+                foreach (KeyValuePair<long, int> elem in QueueSizeHistory)
+                {
+                    AverageQueueSize += elem.Value;
+                }
+
+                AverageQueueSize /= QueueSizeHistory.Count;
+            }
+            
             return AverageQueueSize;
         }
 

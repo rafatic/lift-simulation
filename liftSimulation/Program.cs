@@ -25,10 +25,10 @@ namespace liftSimulation
             double meanPerson = double.Parse(args[6]);
 
             string result = "";
-            string QueueHistoryFilePath = "QueueHistory.csv";
+            string QueueHistoryFilePath = "QueueHistory";
             string resultsFilePath = "result.txt";
 
-            for (int liftMethod = 0; liftMethod < 2; liftMethod++)
+            for (int liftMethod = 0; liftMethod < 3; liftMethod++)
             {
                 using (var context = new SimulationContext(true))
                 {
@@ -38,17 +38,14 @@ namespace liftSimulation
                     {
                         
                         result += "\t\tRESULTS LINEAR SCAN ORDONANCER\n";
-                        //Console.WriteLine("RESULTS LINEAR SCAN ORDONNANCER");
                     }
                     if (liftMethod == 1)
                     {
                         result += "\t\tRESULTS SHORTER SEEK TIME ORDONNANCER\n";
-                        //Console.WriteLine("RESULTS SHORTER SEEK TIME ORDONNANCER");
                     }
                     if (liftMethod == 2)
                     {
                         result += "\t\tRESULTS DEFAULT ORDONNANCER\n";
-                        //Console.WriteLine("RESULTS DEFAULT ORDONNANCER");
                     }
                     result += "\n\n--------------------------------------------------------------------------------------------------\n\n";
 
@@ -57,23 +54,21 @@ namespace liftSimulation
                     Simulator simulator = new Simulator();
 
                     simulator.Simulate();
+                    
+                    result += LiftsResultsToString(context, lifts) + "\n\n";
+                    result += FloorsResultsToString(context, personGenerator.Floors);
 
-                    for (int j=0; j < lifts.Count; j++)
+
+                    
+
+                    foreach(Floor f in personGenerator.Floors)
                     {
-                        result += "\n\n";
-                        result += "RESULTS LIFT " + (j + 1) + " \n\n";
-                        result += SimulationResultsToString(context, lifts[j]) + "\n";
-                        /*Console.WriteLine("\n\n");
-                        Console.WriteLine("RESULTS LIFT " + (j+1) + " \n\n");
-                        Console.WriteLine(SimulationResultsToString(context, lifts[j]));*/
+                        PrintQueueSizeHistoryToFile(QueueHistoryFilePath, f);
                     }
-
-                    Console.WriteLine(result);
-
-                    PrintQueueSizeHistoryToFile(QueueHistoryFilePath, personGenerator.Floors);
-                    PrintToFile(resultsFilePath, result);
+                    PrintToFile(resultsFilePath, LiftsResultsToCsv(context, lifts) + "\n\n" + FloorsResultsToCsv(context, personGenerator.Floors));
                 }
             }
+            Console.WriteLine(result);
             Console.ReadKey();
         }
 
@@ -111,64 +106,77 @@ namespace liftSimulation
         }
 
         
-
-        
-
-        private static string SimulationResultsToString(SimulationContext context, Lift lift)
+        private static string LiftsResultsToCsv(SimulationContext context, List<Lift> lifts)
         {
-            float avgServiceTime, avgWaitTime;
-
-            avgServiceTime = avgWaitTime = 0.0f;
             string str = "";
-            str += "-------------------------- SIMULATION ENDED -----------------------\n\n";
-            str += lift.ProcessedCount + " Persons processed in "+ context.TimePeriod + " seconds\n";
-            str += "\t\t\t\t\t\tPERSONS RECAP \n";
-            str += "\t\t\tUP\t\t\t\t\t\tDOWN\n";
-            str += "ID\tBEGIN QUEUE\tWAIT TIME\tSERVICE TIME\tBEGIN QUEUE\tWAIT TIME\tSERVICE TIME\n";
+            int i = 0;
+            
+            str += ",Proportion of time busy\n";
 
-            foreach(Person p in lift.ProcessedPersons)
+            foreach(Lift l in lifts)
             {
-                avgWaitTime += p.TotalQueueTime;
-                avgServiceTime += p.TotalTimeInLift;
-
-                str += p.ToString();
+                str += "Lift " + i + ", " + Math.Round(((double)l.TimeBusy / (double)context.TimePeriod), 2) + "\n";
+                i++;
             }
 
-            avgServiceTime /= lift.ProcessedCount;
-            avgWaitTime /= lift.ProcessedCount;
-
-            str += "\n-----------------------------------------------------------------\n";
-            str += "Average waiting time : " + Math.Round(avgWaitTime, 2) + "\n";
-            str += "Average service time : " + Math.Round(avgServiceTime, 2) + "\n";
-
-
-            str += "Proportion lift busy : " + Math.Round(((double)lift.TimeBusy / (double)context.TimePeriod), 2);
-
-
-            
-
-                
-            
             return str;
         }
 
-
-        private static void PrintQueueSizeHistoryToFile(string filePath, List<Floor> floors)
+        private static string LiftsResultsToString(SimulationContext context, List<Lift> lifts)
         {
+            string str = "";
+            int i = 0;
+            str += "\t Proportion of time busy\n";
+            foreach(Lift l in lifts)
+            {
+                str += "Lift " + i + "\t\t" + Math.Round(((double)l.TimeBusy / (double)context.TimePeriod), 2) + "\n";
+                i++;
+            }
+            return str;
+        }
 
+        private static string FloorsResultsToCsv(SimulationContext context, List<Floor> floors)
+        {
+            string str = "";
+
+            str += ", Average Queue Size, Maximum Queue Size, Average Wait time, Maximum Wait Time\n";
+            foreach(Floor f in floors)
+            {
+                str += f.Id + ", " + Math.Round(f.GetAverageQueueSize(), 2) + " ," + f.MaximumQueueSize + ", " + Math.Round(f.GetAverageWaitingTime(), 2) + ", " + f.MaximumQueueSize + "\n";
+            }
+
+            return str;
+        }
+        
+        private static string FloorsResultsToString(SimulationContext context, List<Floor> floors)
+        {
+            string str = "";
+
+            str += "\tAverage Queue Size\tMaximum Queue Size\tAverage Wait time\tMaximum Wait Time\n";
+            foreach (Floor f in floors)
+            {
+                str += f.Id + "\t\t" + Math.Round(f.GetAverageQueueSize(), 2) + "\t\t" + f.MaximumQueueSize + "\t\t\t" + Math.Round(f.GetAverageWaitingTime(), 2) + "\t\t\t" + f.MaximumQueueSize + "\n";
+            }
+
+            return str;
+        }
+
+        
+
+
+        private static void PrintQueueSizeHistoryToFile(string filePath, Floor f)
+        {
+            filePath += f.Id + ".csv";
             File.WriteAllText(filePath, string.Empty);
             
 
             using (StreamWriter sw = File.AppendText(filePath))
             {
-                
-                foreach (Floor f in floors)
-                {
-                    sw.Write(f.QueueHistoryToCsv());
-                    
-                }
+
+                sw.Write(f.QueueHistoryToCsv());
                 sw.Close();
             }
+
         }
 
         private static void PrintToFile(string filePath, string content)

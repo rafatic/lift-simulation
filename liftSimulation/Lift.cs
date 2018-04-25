@@ -97,7 +97,6 @@ namespace liftSimulation
 
         public Lift(int maxCapacity, int nbFloors, Random random, PersonGenerator generator, FloorOrdonancer ordonancer, long meanWorkTime) : base()
         {
-            //this.PersonsQueue = personsQueue;
             this.MaxCapacity = maxCapacity;
             this.CurrentLoad = 0;
             this.PersonsInLift = new List<Person>();
@@ -132,7 +131,6 @@ namespace liftSimulation
 
                 if (RequestedFloors.Count == 0)
                 {
-                    //Console.WriteLine("Waiting");
                     yield return new WaitConditionInstruction(() => personsGenerator.getFloorsWhereLiftIsNeeded().Count > 0);
                 }
                 else

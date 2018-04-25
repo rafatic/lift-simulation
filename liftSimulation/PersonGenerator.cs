@@ -172,11 +172,6 @@ namespace liftSimulation
 
             for(int i = 0; i < nbFloors; i++)
             {
-                /*if(PersonsWaiting[i].Count > 0 )
-                {
-                    floors.Add(i);
-                    
-                }*/
                 if(Floors[i].PersonsWaiting.Count > 0)
                 {
                     floors.Add(i);
