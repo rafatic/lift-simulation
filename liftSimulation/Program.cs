@@ -155,7 +155,7 @@ namespace liftSimulation
             str += "\tAverage Queue Size\tMaximum Queue Size\tAverage Wait time\tMaximum Wait Time\n";
             foreach (Floor f in floors)
             {
-                str += f.Id + "\t\t" + Math.Round(f.GetAverageQueueSize(), 2) + "\t\t" + f.MaximumQueueSize + "\t\t\t" + Math.Round(f.GetAverageWaitingTime(), 2) + "\t\t\t" + f.MaximumQueueSize + "\n";
+                str += f.Id + "\t\t" + Math.Round(f.GetAverageQueueSize(), 2) + "\t\t" + f.MaximumQueueSize + "\t\t\t" + Math.Round(f.GetAverageWaitingTime(), 2) + "\t\t\t" + f.MaximumWaitingTime + "\n";
             }
 
             return str;
